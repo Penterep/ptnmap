@@ -30,7 +30,7 @@ class XmlParser:
             osmatch_accuracy = osmatch.get("accuracy")
             result_string += f"{osmatch_name} ({osmatch_accuracy}%)"
 
-            if int(osmatch_accuracy) > 90 and not self.ptjsonlib.json_object["result"]["properties"].get("vendor") and osmatch.find("osclass").get("vendor") is not None:
+            if int(osmatch_accuracy) > 90 and not self.ptjsonlib.json_object["results"]["properties"].get("vendor") and osmatch.find("osclass").get("vendor") is not None:
                 self.ptjsonlib.add_property("os", osmatch.find("osclass").get("vendor"))
             if index+1 != len(self.root.find("host").find("os").findall("osmatch")):
                 result_string += ", "
@@ -51,9 +51,9 @@ class XmlParser:
                 vendor = address.get("vendor")
                 if address.get("addrtype") == "ipv4":
                     props["name"] = addr
-                    props["ip"] = addr
+                    props["ipAddress"] = addr
                 if address.get("addrtype") == "mac":
-                    props["mac"] = addr
+                    props["macAddress"] = addr
                 if address.get("vendor"):
                     props["vendor"] = vendor
             self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("device", properties=props))
@@ -78,8 +78,7 @@ class XmlParser:
                         banner += f'{version}'
                     if extrainfo:
                         banner += f' ({extrainfo})'
-
-                props = {"port": port_id, "name": port_id, "state": state, "service": service}
+                props = {"port": port_id, "name": port_id, "state": state, "serviceType": f"serviceType{service.capitalize()}"}
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
@@ -88,13 +87,14 @@ class XmlParser:
             ports = []
             for port in host.find("ports").findall("port"):
                 port_id = port.get("portid")
-                state = port.find("state").get("state")
+                state = "portState" + port.find("state").get("state").capitalize()
                 reason = port.find("state").get("reason")
                 service = port.find("service")
                 if service is not None:
-                    service = port.find("service").get("name")
-                props = {"port": port_id, "name": port_id, "state": state, "service": service}
-                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("ports", properties=props))
+                    name = port.find("service").get("name")
+                    service = "serviceType" + name.capitalize()
+                props = {"name": name, "port": port_id, "portState": state, "serviceType": service}
+                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
         return ports
 
     def get_elapsed_time(self):

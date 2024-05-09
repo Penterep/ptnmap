@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """
-    Copyright (c) 2023 Penterep Security s.r.o.
+    Copyright (c) 2024 Penterep Security s.r.o.
 
     ptnmap is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,8 +19,11 @@
 import argparse
 import re
 import subprocess
-import sys; sys.path.append(__file__.rsplit("/", 1)[0])
+import site
 import tempfile
+import sys
+sys.path.append(__file__.rsplit("/", 1)[0])
+sys.path.append(f"/home/kali/.local/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages")
 
 from _version import __version__
 from ptlibs import ptprinthelper, ptmisclib, ptjsonlib
@@ -43,11 +46,12 @@ class PtNmap:
                 result_xml = file.read().decode("utf-8")
                 output_parser = xml_parser.XmlParser(result_xml, self.ptjsonlib, self.use_json)
                 output_parser.parse_results(args)
-        except Exception as error_msg:
-            self.ptjsonlib.end_error(str(error_msg).replace("\n", " "), self.use_json)
+        except Exception as e:
+            self.ptjsonlib.end_error(str(e).replace("\n", " "), self.use_json)
 
-        self.ptjsonlib.set_status("ok")
-        print(self.ptjsonlib.get_result_json())
+        self.ptjsonlib.set_status("finished")
+        if self.use_json:
+            print(self.ptjsonlib.get_result_json())
 
     def get_nmap_args(self, args):
         nmap_args = []
@@ -107,6 +111,7 @@ def parse_args():
     parser.add_argument("-p",  "--port",         type=str)
     parser.add_argument("-j",  "--json",         action="store_true", default=True)
     parser.add_argument("-v",  "--version",      action="version", version=f"{SCRIPTNAME} {__version__}")
+
 
     if len(sys.argv) == 1 or "-h" in sys.argv or "--help" in sys.argv:
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)
