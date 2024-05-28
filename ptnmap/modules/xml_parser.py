@@ -31,12 +31,11 @@ class XmlParser:
             result_string += f"{osmatch_name} ({osmatch_accuracy}%)"
 
             if int(osmatch_accuracy) > 90 and not self.ptjsonlib.json_object["results"]["properties"].get("vendor") and osmatch.find("osclass").get("vendor") is not None:
-                self.ptjsonlib.add_property("os", osmatch.find("osclass").get("vendor"))
+                self.ptjsonlib.add_properties({"os": osmatch.find("osclass").get("vendor")})
             if index+1 != len(self.root.find("host").find("os").findall("osmatch")):
                 result_string += ", "
 
-        self.ptjsonlib.add_property("description", "Nmap: "+ result_string)
-
+        self.ptjsonlib.add_properties({"description": "Nmap: " + result_string})
 
     def get_live_hosts(self):
         """Get result from live host scan"""
