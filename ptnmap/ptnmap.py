@@ -65,6 +65,8 @@ class PtNmap:
             nmap_args.append("-sT")
         if args.scan_port_syn:
             nmap_args.append("-sS")
+        if args.scan_port_udp:
+            nmap_args.append("-sU")
         if args.port:
             nmap_args.append(f"-p {args.port}")
         nmap_args.append(args.target)
@@ -86,6 +88,7 @@ def get_help():
             ["-O",  "--scan-os",             "",             "Do OS scan / detect target's OS,  root access required"],
             ["-sT", "--scan-port-connect",   "",             "Do port scan (TCP Connect)"],
             ["-sS", "--scan-port-syn",       "",             "Do port scan (TCP Syn / Stealth), root access required"],
+            ["-sU", "--scan-port-udp",       "",             "Do port scan (UDP), root access required"],
         ]
          },
         {"options": [
@@ -107,6 +110,7 @@ def parse_args():
     exclusive.add_argument("-O",  "--scan-os",           action="store_true")
     exclusive.add_argument("-sS", "--scan-port-syn",     action="store_true")
     exclusive.add_argument("-sT", "--scan-port-connect", action="store_true")
+    exclusive.add_argument("-sU", "--scan-port-udp",     action="store_true")
     parser.add_argument("-t",  "--target",       type=str)
     parser.add_argument("-p",  "--port",         type=str)
     parser.add_argument("-j",  "--json",         action="store_true", default=True)

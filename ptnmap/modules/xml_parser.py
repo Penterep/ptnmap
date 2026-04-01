@@ -17,7 +17,7 @@ class XmlParser:
             self.get_services()
         if args.scan_os:
             self.get_os()
-        if args.scan_port_connect or args.scan_port_syn:
+        if args.scan_port_connect or args.scan_port_syn or args.scan_port_udp:
             self.get_ports()
 
 
@@ -86,13 +86,16 @@ class XmlParser:
             ports = []
             for port in host.find("ports").findall("port"):
                 port_id = port.get("portid")
+                protocol = port.get("protocol")
                 state = "portState" + port.find("state").get("state").capitalize()
                 reason = port.find("state").get("reason")
-                service = port.find("service")
-                if service is not None:
-                    name = port.find("service").get("name")
+                service_elem = port.find("service")
+                name = port_id
+                service = None
+                if service_elem is not None:
+                    name = service_elem.get("name")
                     service = "serviceType" + name.capitalize()
-                props = {"name": name, "port": port_id, "portState": state, "serviceType": service}
+                props = {"name": name, "port": port_id, "protocol": protocol, "portState": state, "serviceType": service}
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
         return ports
 
