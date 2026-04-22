@@ -1,5 +1,10 @@
 ## Version History
 
+## Version 0.0.5
+
+- Fixed XML parser to ignore closed ports in UDP scans (-sU).
+- Removed incorrect root access requirement for UDP scans from help output.
+
 ## Version 0.0.4
 
 - Added UDP support.
