@@ -65,6 +65,8 @@ class XmlParser:
                 banner = ""
                 port_id = port.get("portid")
                 state = port.find("state").get("state")
+                if state == "closed":
+                    continue
                 service = port.find("service")
                 if service is not None:
                     service = port.find("service").get("name")
@@ -77,7 +79,7 @@ class XmlParser:
                         banner += f'{version}'
                     if extrainfo:
                         banner += f' ({extrainfo})'
-                props = {"port": port_id, "name": port_id, "state": state, "serviceType": f"serviceType{service.capitalize()}"}
+                props = {"port": port_id, "name": port_id, "state": state, "serviceType": f"serviceType{service.capitalize()}" if service else None}
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
@@ -85,9 +87,12 @@ class XmlParser:
         for host in self.root.findall("host"):
             ports = []
             for port in host.find("ports").findall("port"):
+                raw_state = port.find("state").get("state")
+                if raw_state == "closed":
+                    continue
                 port_id = port.get("portid")
                 protocol = port.get("protocol")
-                state = "portState" + port.find("state").get("state").capitalize()
+                state = "portState" + raw_state.capitalize()
                 reason = port.find("state").get("reason")
                 service_elem = port.find("service")
                 name = port_id

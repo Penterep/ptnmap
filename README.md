@@ -38,6 +38,8 @@ Scan options:
    -O   --scan-os              Do OS scan / detect target's OS,  root access required
    -sT  --scan-port-connect    Do port scan (TCP Connect)
    -sS  --scan-port-syn        Do port scan (TCP Syn / Stealth), root access required
+   -sU  --scan-port-udp        Do port scan (UDP Connect)
+
 
 Options:
    -t  --target   <target>  Set target
