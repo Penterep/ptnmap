@@ -1,5 +1,9 @@
 ## Version History
 
+## Version 0.0.7
+
+- Added device nodes as parents for services in port scan results against multiple targets.
+
 ## Version 0.0.6
 
 - Added `-PE`/`--ping-echo` and `-PS`/`--ping-syn` discovery options.

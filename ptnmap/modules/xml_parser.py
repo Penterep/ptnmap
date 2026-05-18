@@ -42,21 +42,7 @@ class XmlParser:
     def get_live_hosts(self):
         """Get result from live host scan"""
         for host in self.root.findall("host"):
-            props = dict()
-
-            for address in host.findall("address"):
-                addr_type = address.get("addrtype")
-                state = host.find("status").get("state")
-                reason = host.find("status").get("reason")
-                addr = address.get("addr")
-                vendor = address.get("vendor")
-                if address.get("addrtype") == "ipv4":
-                    props["name"] = addr
-                    props["ipAddress"] = addr
-                if address.get("addrtype") == "mac":
-                    props["macAddress"] = addr
-                if address.get("vendor"):
-                    props["vendor"] = vendor
+            props = self.get_host_properties(host)
             self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("device", properties=props))
 
 
@@ -87,8 +73,14 @@ class XmlParser:
 
     def get_ports(self):
         for host in self.root.findall("host"):
-            ports = []
-            for port in host.find("ports").findall("port"):
+            device_node = self.ptjsonlib.create_node_object("device", properties=self.get_host_properties(host))
+            self.ptjsonlib.add_node(device_node)
+
+            ports_elem = host.find("ports")
+            if ports_elem is None:
+                continue
+
+            for port in ports_elem.findall("port"):
                 raw_state = port.find("state").get("state")
                 if raw_state == "closed":
                     continue
@@ -106,8 +98,23 @@ class XmlParser:
                 version = self.get_service_version(service_elem)
                 if version:
                     props["version"] = version
-                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
-        return ports
+                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type="device", parent=device_node.get("key"), properties=props))
+
+    @staticmethod
+    def get_host_properties(host):
+        props = dict()
+
+        for address in host.findall("address"):
+            addr = address.get("addr")
+            vendor = address.get("vendor")
+            if address.get("addrtype") == "ipv4":
+                props["name"] = addr
+                props["ipAddress"] = addr
+            if address.get("addrtype") == "mac":
+                props["macAddress"] = addr
+            if vendor:
+                props["vendor"] = vendor
+        return props
 
     @staticmethod
     def get_service_version(service_elem):
