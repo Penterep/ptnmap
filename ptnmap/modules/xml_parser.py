@@ -11,13 +11,15 @@ class XmlParser:
 
     def parse_results(self, args):
         """Main method"""
+        scan_ports = args.scan_port_connect or args.scan_port_syn or args.scan_port_udp
+
         if args.scan_live:
             self.get_live_hosts()
-        if args.scan_service:
+        if args.scan_service and not scan_ports:
             self.get_services()
         if args.scan_os:
             self.get_os()
-        if args.scan_port_connect or args.scan_port_syn or args.scan_port_udp:
+        if scan_ports:
             self.get_ports()
 
 
@@ -101,8 +103,28 @@ class XmlParser:
                     name = service_elem.get("name")
                     service = "serviceType" + name.capitalize()
                 props = {"name": name, "port": port_id, "protocol": protocol, "portState": state, "serviceType": service}
+                version = self.get_service_version(service_elem)
+                if version:
+                    props["version"] = version
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
         return ports
+
+    @staticmethod
+    def get_service_version(service_elem):
+        if service_elem is None:
+            return None
+
+        banner = ""
+        product = service_elem.get("product")
+        version = service_elem.get("version")
+        extrainfo = service_elem.get("extrainfo")
+        if product:
+            banner += product
+        if version:
+            banner += version
+        if extrainfo:
+            banner += f" ({extrainfo})"
+        return banner or None
 
     def get_elapsed_time(self):
         return self.root.find("runstats").find("finished").get("elapsed")

@@ -28,17 +28,20 @@ source ~/.zshrc
 ptnmap -sn -t 192.168.0.0/24
 ptnmap -sT -t 192.168.0.1 -p 1-1000
 ptnmap -sT -t 192.168.0.1 -sV
+ptnmap -sn -PE -t 192.168.0.0/24
 ```
 
 ## Options
 ```
 Scan options:
    -sn  --scan-live            Do live device scan / portsweep / no service detection
-   -sV  --scan-service         Do service scan / service banner grabber
    -O   --scan-os              Do OS scan / detect target's OS,  root access required
    -sT  --scan-port-connect    Do port scan (TCP Connect)
    -sS  --scan-port-syn        Do port scan (TCP Syn / Stealth), root access required
    -sU  --scan-port-udp        Do port scan (UDP Connect)
+   -sV  --scan-service         Do service scan / service banner grabber
+   -PE  --ping-echo            Use ICMP echo discovery
+   -PS  --ping-syn             Use TCP SYN discovery
 
 
 Options:

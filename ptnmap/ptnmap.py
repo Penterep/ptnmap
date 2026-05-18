@@ -61,6 +61,10 @@ class PtNmap:
             nmap_args.append("-O")
         if args.scan_service:
             nmap_args.append("-sV")
+        if args.ping_echo:
+            nmap_args.append("-PE")
+        if args.ping_syn:
+            nmap_args.append("-PS")
         if args.scan_port_connect:
             nmap_args.append("-sT")
         if args.scan_port_syn:
@@ -68,7 +72,7 @@ class PtNmap:
         if args.scan_port_udp:
             nmap_args.append("-sU")
         if args.port:
-            nmap_args.append(f"-p {args.port}")
+            nmap_args.extend(["-p", args.port])
         nmap_args.append(args.target)
         return nmap_args
 
@@ -81,14 +85,17 @@ def get_help():
             ["ptnmap -sn -t 192.168.0.0/24"],
             ["ptnmap -sT -t 192.168.0.1 -p 1-1000"],
             ["ptnmap -sT -t 192.168.0.1 -sV"],
+            ["ptnmap -sn -PE -t 192.168.0.0/24"],
         ]},
         {"Scan options": [
             ["-sn", "--scan-live",           "",             "Do live device scan / portsweep / no service detection"],
-            ["-sV", "--scan-service",        "",             "Do service scan / service banner grabber"],
             ["-O",  "--scan-os",             "",             "Do OS scan / detect target's OS,  root access required"],
             ["-sT", "--scan-port-connect",   "",             "Do port scan (TCP Connect)"],
             ["-sS", "--scan-port-syn",       "",             "Do port scan (TCP Syn / Stealth), root access required"],
             ["-sU", "--scan-port-udp",       "",             "Do port scan (UDP Connect)"],
+            ["-sV", "--scan-service",        "",             "Do service scan / service banner grabber"],
+            ["-PE", "--ping-echo",           "",             "Use ICMP echo discovery"],
+            ["-PS", "--ping-syn",            "",             "Use TCP SYN discovery"],
         ]
          },
         {"options": [
@@ -104,13 +111,15 @@ def get_help():
 
 def parse_args():
     parser = argparse.ArgumentParser(add_help=True, usage=f"{SCRIPTNAME} <options>")
-    exclusive = parser.add_mutually_exclusive_group(required=True)
+    exclusive = parser.add_mutually_exclusive_group()
     exclusive.add_argument("-sn", "--scan-live",         action="store_true")
-    exclusive.add_argument("-sV", "--scan-service",      action="store_true")
     exclusive.add_argument("-O",  "--scan-os",           action="store_true")
     exclusive.add_argument("-sS", "--scan-port-syn",     action="store_true")
     exclusive.add_argument("-sT", "--scan-port-connect", action="store_true")
     exclusive.add_argument("-sU", "--scan-port-udp",     action="store_true")
+    parser.add_argument("-sV", "--scan-service", action="store_true")
+    parser.add_argument("-PE", "--ping-echo",    action="store_true")
+    parser.add_argument("-PS", "--ping-syn",     action="store_true")
     parser.add_argument("-t",  "--target",       type=str)
     parser.add_argument("-p",  "--port",         type=str)
     parser.add_argument("-j",  "--json",         action="store_true", default=True)
@@ -124,6 +133,10 @@ def parse_args():
         ptprinthelper.help_print(get_help(), SCRIPTNAME, __version__)
         sys.exit(0)
     args = parser.parse_args()
+    if not any([args.scan_live, args.scan_os, args.scan_port_syn, args.scan_port_connect, args.scan_port_udp, args.scan_service]):
+        parser.error("one scan option is required")
+    if args.scan_live and args.scan_service:
+        parser.error("-sV/--scan-service cannot be used with -sn/--scan-live")
     ptprinthelper.print_banner(SCRIPTNAME, __version__, args.json)
     return args
 

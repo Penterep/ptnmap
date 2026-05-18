@@ -1,5 +1,10 @@
 ## Version History
 
+## Version 0.0.6
+
+- Added `-PE`/`--ping-echo` and `-PS`/`--ping-syn` discovery options.
+- Made `-sV`/`--scan-service` combinable with port scan options.
+
 ## Version 0.0.5
 
 - Fixed XML parser to ignore closed ports in UDP scans (-sU).
