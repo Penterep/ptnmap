@@ -77,10 +77,12 @@ class XmlParser:
     def get_ports(self, multi_target=False):
         for host in self.root.findall("host"):
             service_parent = None
+            service_parent_type = None
             if multi_target:
                 device_node = self.ptjsonlib.create_node_object("device", properties=self.get_host_properties(host))
                 self.ptjsonlib.add_node(device_node)
                 service_parent = device_node.get("key")
+                service_parent_type = "device"
 
             ports_elem = host.find("ports")
             if ports_elem is None:
@@ -104,7 +106,7 @@ class XmlParser:
                 version = self.get_service_version(service_elem)
                 if version:
                     props["version"] = version
-                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type="device", parent=service_parent, properties=props))
+                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type=service_parent_type, parent=service_parent, properties=props))
 
     @staticmethod
     def is_multi_target(target):

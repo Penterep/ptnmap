@@ -130,7 +130,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0]["type"], "service")
         self.assertIsNone(nodes[0]["parent"])
-        self.assertEqual(nodes[0]["parentType"], "device")
+        self.assertIsNone(nodes[0]["parentType"])
         self.assertEqual(nodes[0]["properties"], {
             "name": "domain",
             "port": "53",
