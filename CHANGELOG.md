@@ -1,8 +1,9 @@
 ## Version History
 
-## Version 0.0.7
+## Version 0.0.8
 
 - Added device nodes as parents for services in port scan results against multiple targets.
+- Preserved top-level service output for single-target port scans.
 
 ## Version 0.0.6
 

@@ -34,6 +34,7 @@ class FakePtJsonLib:
 
 def port_scan_args():
     return SimpleNamespace(
+        target="192.168.1.0/24",
         scan_live=False,
         scan_service=False,
         scan_os=False,
@@ -105,6 +106,38 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0]["type"], "device")
         self.assertEqual(nodes[0]["properties"]["ipAddress"], "192.168.1.12")
+
+    def test_single_target_port_scan_returns_only_top_level_services(self):
+        xml = """<nmaprun>
+<host>
+  <status state="up"/>
+  <address addr="192.168.1.118" addrtype="ipv4"/>
+  <address addr="EE:DC:B5:BB:44:07" addrtype="mac"/>
+  <ports>
+    <port protocol="tcp" portid="53">
+      <state state="open" reason="syn-ack"/>
+      <service name="domain"/>
+    </port>
+  </ports>
+</host>
+<runstats><finished elapsed="1" summary="ok"/></runstats>
+</nmaprun>"""
+        args = port_scan_args()
+        args.target = "192.168.1.118"
+
+        nodes = self.parse_nodes(xml, args)
+
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0]["type"], "service")
+        self.assertIsNone(nodes[0]["parent"])
+        self.assertEqual(nodes[0]["parentType"], "device")
+        self.assertEqual(nodes[0]["properties"], {
+            "name": "domain",
+            "port": "53",
+            "protocol": "tcp",
+            "portState": "portStateOpen",
+            "serviceType": "serviceTypeDomain",
+        })
 
 
 if __name__ == "__main__":

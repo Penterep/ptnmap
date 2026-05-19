@@ -1,3 +1,6 @@
+import ipaddress
+import re
+
 import defusedxml.ElementTree as ET
 
 class XmlParser:
@@ -20,7 +23,7 @@ class XmlParser:
         if args.scan_os:
             self.get_os()
         if scan_ports:
-            self.get_ports()
+            self.get_ports(self.is_multi_target(getattr(args, "target", None)))
 
 
     def get_os(self):
@@ -71,10 +74,13 @@ class XmlParser:
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
-    def get_ports(self):
+    def get_ports(self, multi_target=False):
         for host in self.root.findall("host"):
-            device_node = self.ptjsonlib.create_node_object("device", properties=self.get_host_properties(host))
-            self.ptjsonlib.add_node(device_node)
+            service_parent = None
+            if multi_target:
+                device_node = self.ptjsonlib.create_node_object("device", properties=self.get_host_properties(host))
+                self.ptjsonlib.add_node(device_node)
+                service_parent = device_node.get("key")
 
             ports_elem = host.find("ports")
             if ports_elem is None:
@@ -98,7 +104,20 @@ class XmlParser:
                 version = self.get_service_version(service_elem)
                 if version:
                     props["version"] = version
-                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type="device", parent=device_node.get("key"), properties=props))
+                self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type="device", parent=service_parent, properties=props))
+
+    @staticmethod
+    def is_multi_target(target):
+        if not target:
+            return False
+
+        target = target.strip()
+        try:
+            return ipaddress.ip_network(target, strict=False).num_addresses > 1
+        except ValueError:
+            pass
+
+        return any(separator in target for separator in [",", " ", "*"]) or re.search(r"(?:^|\.)\d+-\d+(?:\.|$)", target) is not None
 
     @staticmethod
     def get_host_properties(host):
