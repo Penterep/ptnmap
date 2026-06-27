@@ -70,7 +70,7 @@ class XmlParser:
                         banner += f'{version}'
                     if extrainfo:
                         banner += f' ({extrainfo})'
-                props = {"port": port_id, "name": port_id, "state": state, "serviceType": f"serviceType{service.capitalize()}" if service else None}
+                props = {"port": port_id, "name": port_id, "state": state, "serviceType": self.get_service_type(service)}
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
@@ -101,7 +101,7 @@ class XmlParser:
                 service = None
                 if service_elem is not None:
                     name = service_elem.get("name")
-                    service = "serviceType" + name.capitalize()
+                    service = self.get_service_type(name)
                 props = {"name": name, "port": port_id, "protocol": protocol, "portState": state, "serviceType": service}
                 version = self.get_service_version(service_elem)
                 if version:
@@ -153,6 +153,16 @@ class XmlParser:
         if extrainfo:
             banner += f" ({extrainfo})"
         return banner or None
+
+    @staticmethod
+    def get_service_type(service):
+        if not service:
+            return None
+
+        if service == "http":
+            return "serviceTypeHttps"
+
+        return "serviceType" + service.capitalize()
 
     def get_elapsed_time(self):
         return self.root.find("runstats").find("finished").get("elapsed")

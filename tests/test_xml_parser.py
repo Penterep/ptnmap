@@ -44,6 +44,15 @@ def port_scan_args():
     )
 
 
+def service_scan_args():
+    args = port_scan_args()
+    args.scan_service = True
+    args.scan_port_connect = False
+    args.scan_port_syn = False
+    args.scan_port_udp = False
+    return args
+
+
 class XmlParserPortScanTest(unittest.TestCase):
     def parse_nodes(self, xml, args=None):
         ptjsonlib = FakePtJsonLib()
@@ -91,6 +100,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(nodes[3]["parentType"], "device")
         self.assertEqual(nodes[3]["parent"], nodes[2]["key"])
         self.assertEqual(nodes[3]["properties"]["port"], "80")
+        self.assertEqual(nodes[3]["properties"]["serviceType"], "serviceTypeHttps")
 
     def test_port_scan_keeps_device_when_host_has_no_ports(self):
         xml = """<nmaprun>
@@ -138,6 +148,27 @@ class XmlParserPortScanTest(unittest.TestCase):
             "portState": "portStateOpen",
             "serviceType": "serviceTypeDomain",
         })
+
+    def test_service_scan_maps_http_to_https_service_type(self):
+        xml = """<nmaprun>
+<host>
+  <status state="up"/>
+  <address addr="192.168.1.118" addrtype="ipv4"/>
+  <ports>
+    <port protocol="tcp" portid="80">
+      <state state="open" reason="syn-ack"/>
+      <service name="http"/>
+    </port>
+  </ports>
+</host>
+<runstats><finished elapsed="1" summary="ok"/></runstats>
+</nmaprun>"""
+
+        nodes = self.parse_nodes(xml, service_scan_args())
+
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0]["type"], "service")
+        self.assertEqual(nodes[0]["properties"]["serviceType"], "serviceTypeHttps")
 
 
 if __name__ == "__main__":
