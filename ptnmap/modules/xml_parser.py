@@ -45,8 +45,7 @@ class XmlParser:
     def get_live_hosts(self):
         """Get result from live host scan"""
         for host in self.root.findall("host"):
-            props = self.get_host_properties(host)
-            self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("device", properties=props))
+            self.add_device_nodes(host)
 
 
     def get_services(self):
@@ -79,8 +78,7 @@ class XmlParser:
             service_parent = None
             service_parent_type = None
             if multi_target:
-                device_node = self.ptjsonlib.create_node_object("device", properties=self.get_host_properties(host))
-                self.ptjsonlib.add_node(device_node)
+                device_node = self.add_device_nodes(host)
                 service_parent = device_node.get("key")
                 service_parent_type = "device"
 
@@ -121,21 +119,36 @@ class XmlParser:
 
         return any(separator in target for separator in [",", " ", "*"]) or re.search(r"(?:^|\.)\d+-\d+(?:\.|$)", target) is not None
 
-    @staticmethod
-    def get_host_properties(host):
-        props = dict()
+    def add_device_nodes(self, host):
+        device_props = {}
+        adapter_props = {"name": "Net interface"}
+        ip_props = {"ip_address_type": "ipAddressTypeIPv4"}
 
         for address in host.findall("address"):
             addr = address.get("addr")
             vendor = address.get("vendor")
             if address.get("addrtype") == "ipv4":
-                props["name"] = addr
-                props["ipAddress"] = addr
+                device_props["name"] = addr
+                ip_props["name"] = addr
             if address.get("addrtype") == "mac":
-                props["macAddress"] = addr
+                adapter_props["macAddress"] = addr
             if vendor:
-                props["vendor"] = vendor
-        return props
+                adapter_props["vendor"] = vendor
+                ip_props["vendor"] = vendor
+
+        device_node = self.ptjsonlib.create_node_object("device", properties=device_props)
+        self.ptjsonlib.add_node(device_node)
+
+        adapter_node = self.ptjsonlib.create_node_object(
+            "net_adapter", parent=device_node.get("key"), properties=adapter_props
+        )
+        self.ptjsonlib.add_node(adapter_node)
+
+        ip_node = self.ptjsonlib.create_node_object(
+            "ip_address", parent=adapter_node.get("key"), properties=ip_props
+        )
+        self.ptjsonlib.add_node(ip_node)
+        return device_node
 
     @staticmethod
     def get_service_version(service_elem):
