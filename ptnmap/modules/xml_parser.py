@@ -135,19 +135,21 @@ class XmlParser:
                 adapter_props["macAddress"] = addr
             if vendor:
                 adapter_props["vendor"] = vendor
-                ip_props["vendor"] = vendor
 
         device_node = self.ptjsonlib.create_node_object("device", properties=device_props)
+        device_node["autoAddChildren"] = False
         self.ptjsonlib.add_node(device_node)
 
         adapter_node = self.ptjsonlib.create_node_object(
             "net_adapter", parent=device_node.get("key"), properties=adapter_props
         )
+        adapter_node["autoAddChildren"] = False
         self.ptjsonlib.add_node(adapter_node)
 
         ip_node = self.ptjsonlib.create_node_object(
             "ip_address", parent=adapter_node.get("key"), properties=ip_props
         )
+        ip_node["autoAddChildren"] = False
         self.ptjsonlib.add_node(ip_node)
         return device_node
 
