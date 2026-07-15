@@ -130,6 +130,7 @@ class XmlParser:
             if address.get("addrtype") == "ipv4":
                 device_props["name"] = addr
                 ip_props["name"] = addr
+                ip_props["ip_address"] = addr
             if address.get("addrtype") == "mac":
                 adapter_props["macAddress"] = addr
             if vendor:

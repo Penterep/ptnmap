@@ -153,6 +153,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertIsNone(nodes[2]["parentType"])
         self.assertEqual(nodes[2]["properties"], {
             "name": "192.168.1.1",
+            "ip_address": "192.168.1.1",
             "ip_address_type": "ipAddressTypeIPv4",
             "vendor": "Zyxel Communications",
         })
