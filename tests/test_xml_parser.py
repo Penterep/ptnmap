@@ -53,6 +53,13 @@ def service_scan_args():
     return args
 
 
+def live_scan_args():
+    args = port_scan_args()
+    args.scan_live = True
+    args.scan_port_syn = False
+    return args
+
+
 class XmlParserPortScanTest(unittest.TestCase):
     def parse_nodes(self, xml, args=None):
         ptjsonlib = FakePtJsonLib()
@@ -89,18 +96,22 @@ class XmlParserPortScanTest(unittest.TestCase):
 
         nodes = self.parse_nodes(xml)
 
-        self.assertEqual([node["type"] for node in nodes], ["device", "service", "device", "service"])
-        self.assertEqual(nodes[0]["properties"]["ipAddress"], "192.168.1.10")
-        self.assertEqual(nodes[1]["parentType"], "device")
-        self.assertEqual(nodes[1]["parent"], nodes[0]["key"])
-        self.assertEqual(nodes[1]["properties"]["port"], "22")
-        self.assertEqual(nodes[1]["properties"]["serviceType"], "serviceTypeSsh")
-        self.assertEqual(nodes[1]["properties"]["version"], "OpenSSH9.6")
-        self.assertEqual(nodes[2]["properties"]["ipAddress"], "192.168.1.11")
+        self.assertEqual([node["type"] for node in nodes], [
+            "device", "net_adapter", "ip_address", "service",
+            "device", "net_adapter", "ip_address", "service",
+        ])
+        self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.10"})
+        self.assertEqual(nodes[2]["properties"]["name"], "192.168.1.10")
         self.assertEqual(nodes[3]["parentType"], "device")
-        self.assertEqual(nodes[3]["parent"], nodes[2]["key"])
-        self.assertEqual(nodes[3]["properties"]["port"], "80")
-        self.assertEqual(nodes[3]["properties"]["serviceType"], "serviceTypeHttps")
+        self.assertEqual(nodes[3]["parent"], nodes[0]["key"])
+        self.assertEqual(nodes[3]["properties"]["port"], "22")
+        self.assertEqual(nodes[3]["properties"]["serviceType"], "serviceTypeSsh")
+        self.assertEqual(nodes[3]["properties"]["version"], "OpenSSH9.6")
+        self.assertEqual(nodes[4]["properties"], {"name": "192.168.1.11"})
+        self.assertEqual(nodes[7]["parentType"], "device")
+        self.assertEqual(nodes[7]["parent"], nodes[4]["key"])
+        self.assertEqual(nodes[7]["properties"]["port"], "80")
+        self.assertEqual(nodes[7]["properties"]["serviceType"], "serviceTypeHttps")
 
     def test_port_scan_keeps_device_when_host_has_no_ports(self):
         xml = """<nmaprun>
@@ -113,9 +124,38 @@ class XmlParserPortScanTest(unittest.TestCase):
 
         nodes = self.parse_nodes(xml)
 
-        self.assertEqual(len(nodes), 1)
+        self.assertEqual(len(nodes), 3)
         self.assertEqual(nodes[0]["type"], "device")
-        self.assertEqual(nodes[0]["properties"]["ipAddress"], "192.168.1.12")
+        self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.12"})
+
+    def test_live_scan_adds_adapter_and_ip_address_children(self):
+        xml = """<nmaprun>
+<host>
+  <status state="up"/>
+  <address addr="192.168.1.1" addrtype="ipv4"/>
+  <address addr="FC:22:F4:E3:83:F4" addrtype="mac" vendor="Zyxel Communications"/>
+</host>
+<runstats><finished elapsed="1" summary="ok"/></runstats>
+</nmaprun>"""
+
+        nodes = self.parse_nodes(xml, live_scan_args())
+
+        self.assertEqual([node["type"] for node in nodes], ["device", "net_adapter", "ip_address"])
+        self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.1"})
+        self.assertEqual(nodes[1]["parent"], nodes[0]["key"])
+        self.assertIsNone(nodes[1]["parentType"])
+        self.assertEqual(nodes[1]["properties"], {
+            "name": "Net interface",
+            "macAddress": "FC:22:F4:E3:83:F4",
+            "vendor": "Zyxel Communications",
+        })
+        self.assertEqual(nodes[2]["parent"], nodes[1]["key"])
+        self.assertIsNone(nodes[2]["parentType"])
+        self.assertEqual(nodes[2]["properties"], {
+            "name": "192.168.1.1",
+            "ip_address_type": "ipAddressTypeIPv4",
+            "vendor": "Zyxel Communications",
+        })
 
     def test_single_target_port_scan_returns_only_top_level_services(self):
         xml = """<nmaprun>
