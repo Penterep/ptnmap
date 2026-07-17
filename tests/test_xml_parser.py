@@ -244,7 +244,7 @@ class XmlParserPortScanTest(unittest.TestCase):
             "name": "SVRLOC",
             "port": "427",
             "protocol": "udp",
-            "portState": "portStateOpen|filtered",
+            "portState": "portStateOpenFiltered",
             "serviceType": "serviceTypeSvrloc",
         })
 

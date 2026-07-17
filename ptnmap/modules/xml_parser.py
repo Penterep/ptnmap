@@ -93,7 +93,7 @@ class XmlParser:
                     continue
                 port_id = port.get("portid")
                 protocol = port.get("protocol")
-                state = "portState" + raw_state.capitalize()
+                state = "portState" + "".join(part.capitalize() for part in raw_state.split("|"))
                 reason = port.find("state").get("reason")
                 service_elem = port.find("service")
                 name = port_id
