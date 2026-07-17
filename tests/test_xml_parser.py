@@ -129,6 +129,8 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(len(nodes), 3)
         self.assertEqual(nodes[0]["type"], "device")
         self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.12"})
+        self.assertEqual(nodes[1]["type"], "net_adapter")
+        self.assertEqual(nodes[1]["properties"], {"name": "Net interface"})
 
     def test_live_scan_adds_adapter_and_ip_address_children(self):
         xml = """<nmaprun>
@@ -149,7 +151,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertIsNone(nodes[1]["parentType"])
         self.assertFalse(nodes[1]["autoAddChildren"])
         self.assertEqual(nodes[1]["properties"], {
-            "name": "Net interface",
+            "name": "FC:22:F4:E3:83:F4",
             "macAddress": "FC:22:F4:E3:83:F4",
             "vendor": "Zyxel Communications",
         })

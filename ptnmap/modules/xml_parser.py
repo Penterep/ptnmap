@@ -135,9 +135,10 @@ class XmlParser:
                 ip_props["name"] = addr
                 ip_props["ip_address"] = addr
             if address.get("addrtype") == "mac":
+                adapter_props["name"] = addr
                 adapter_props["macAddress"] = addr
-            if vendor:
-                adapter_props["vendor"] = vendor
+                if vendor:
+                    adapter_props["vendor"] = vendor
 
         device_node = self.ptjsonlib.create_node_object("device", properties=device_props)
         device_node["autoAddChildren"] = False
