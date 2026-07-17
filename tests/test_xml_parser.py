@@ -104,12 +104,14 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(nodes[2]["properties"]["name"], "192.168.1.10")
         self.assertEqual(nodes[3]["parentType"], "device")
         self.assertEqual(nodes[3]["parent"], nodes[0]["key"])
+        self.assertEqual(nodes[3]["properties"]["name"], "SSH")
         self.assertEqual(nodes[3]["properties"]["port"], "22")
         self.assertEqual(nodes[3]["properties"]["serviceType"], "serviceTypeSsh")
         self.assertEqual(nodes[3]["properties"]["version"], "OpenSSH9.6")
         self.assertEqual(nodes[4]["properties"], {"name": "192.168.1.11"})
         self.assertEqual(nodes[7]["parentType"], "device")
         self.assertEqual(nodes[7]["parent"], nodes[4]["key"])
+        self.assertEqual(nodes[7]["properties"]["name"], "HTTP")
         self.assertEqual(nodes[7]["properties"]["port"], "80")
         self.assertEqual(nodes[7]["properties"]["serviceType"], "serviceTypeHttps")
 
@@ -185,7 +187,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertIsNone(nodes[0]["parent"])
         self.assertIsNone(nodes[0]["parentType"])
         self.assertEqual(nodes[0]["properties"], {
-            "name": "domain",
+            "name": "DOMAIN",
             "port": "53",
             "protocol": "tcp",
             "portState": "portStateOpen",
@@ -211,7 +213,38 @@ class XmlParserPortScanTest(unittest.TestCase):
 
         self.assertEqual(len(nodes), 1)
         self.assertEqual(nodes[0]["type"], "service")
+        self.assertEqual(nodes[0]["properties"]["name"], "HTTP")
         self.assertEqual(nodes[0]["properties"]["serviceType"], "serviceTypeHttps")
+
+    def test_udp_service_name_is_uppercase(self):
+        xml = """<nmaprun>
+<host>
+  <status state="up"/>
+  <address addr="192.168.1.118" addrtype="ipv4"/>
+  <ports>
+    <port protocol="udp" portid="427">
+      <state state="open|filtered" reason="no-response"/>
+      <service name="svrloc"/>
+    </port>
+  </ports>
+</host>
+<runstats><finished elapsed="1" summary="ok"/></runstats>
+</nmaprun>"""
+        args = port_scan_args()
+        args.target = "192.168.1.118"
+        args.scan_port_syn = False
+        args.scan_port_udp = True
+
+        nodes = self.parse_nodes(xml, args)
+
+        self.assertEqual(len(nodes), 1)
+        self.assertEqual(nodes[0]["properties"], {
+            "name": "SVRLOC",
+            "port": "427",
+            "protocol": "udp",
+            "portState": "portStateOpen|filtered",
+            "serviceType": "serviceTypeSvrloc",
+        })
 
 
 if __name__ == "__main__":

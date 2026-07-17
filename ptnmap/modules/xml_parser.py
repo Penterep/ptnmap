@@ -69,7 +69,8 @@ class XmlParser:
                         banner += f'{version}'
                     if extrainfo:
                         banner += f' ({extrainfo})'
-                props = {"port": port_id, "name": port_id, "state": state, "serviceType": self.get_service_type(service)}
+                name = service.upper() if service else port_id
+                props = {"port": port_id, "name": name, "state": state, "serviceType": self.get_service_type(service)}
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
@@ -100,6 +101,8 @@ class XmlParser:
                 if service_elem is not None:
                     name = service_elem.get("name")
                     service = self.get_service_type(name)
+                    if name:
+                        name = name.upper()
                 props = {"name": name, "port": port_id, "protocol": protocol, "portState": state, "serviceType": service}
                 version = self.get_service_version(service_elem)
                 if version:
