@@ -97,8 +97,8 @@ class XmlParserPortScanTest(unittest.TestCase):
         nodes = self.parse_nodes(xml)
 
         self.assertEqual([node["type"] for node in nodes], [
-            "device", "net_adapter", "ip_address", "service",
-            "device", "net_adapter", "ip_address", "service",
+            "device", "net_interface", "ip_address", "service",
+            "device", "net_interface", "ip_address", "service",
         ])
         self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.10"})
         self.assertEqual(nodes[2]["properties"]["name"], "192.168.1.10")
@@ -129,7 +129,7 @@ class XmlParserPortScanTest(unittest.TestCase):
         self.assertEqual(len(nodes), 3)
         self.assertEqual(nodes[0]["type"], "device")
         self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.12"})
-        self.assertEqual(nodes[1]["type"], "net_adapter")
+        self.assertEqual(nodes[1]["type"], "net_interface")
         self.assertEqual(nodes[1]["properties"], {"name": "Net interface"})
 
     def test_live_scan_adds_adapter_and_ip_address_children(self):
@@ -144,7 +144,7 @@ class XmlParserPortScanTest(unittest.TestCase):
 
         nodes = self.parse_nodes(xml, live_scan_args())
 
-        self.assertEqual([node["type"] for node in nodes], ["device", "net_adapter", "ip_address"])
+        self.assertEqual([node["type"] for node in nodes], ["device", "net_interface", "ip_address"])
         self.assertFalse(nodes[0]["autoAddChildren"])
         self.assertEqual(nodes[0]["properties"], {"name": "192.168.1.1"})
         self.assertEqual(nodes[1]["parent"], nodes[0]["key"])

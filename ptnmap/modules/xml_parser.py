@@ -145,7 +145,7 @@ class XmlParser:
         self.ptjsonlib.add_node(device_node)
 
         adapter_node = self.ptjsonlib.create_node_object(
-            "net_adapter", parent=device_node.get("key"), properties=adapter_props
+            "net_interface", parent=device_node.get("key"), properties=adapter_props
         )
         adapter_node["autoAddChildren"] = False
         self.ptjsonlib.add_node(adapter_node)
