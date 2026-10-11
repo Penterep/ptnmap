@@ -1,5 +1,7 @@
 import ipaddress
+import json
 import re
+from pathlib import Path
 
 import defusedxml.ElementTree as ET
 
@@ -9,20 +11,29 @@ class XmlParser:
         try:
             self.ptjsonlib = ptjsonlib
             self.root = ET.fromstring(xml_output)
+            self.service_mapping = None
         except Exception as e:
             self.ptjsonlib.end_error(f"Error parsing XML file - {e}", use_json)
 
     def parse_results(self, args):
         """Main method"""
         scan_ports = args.scan_port_connect or args.scan_port_syn or args.scan_port_udp
+        current_service = (
+            args.scan_service
+            and not self.is_multi_target(getattr(args, "target", None))
+            and bool(getattr(args, "target", None))
+            and self.is_single_port(getattr(args, "port", None))
+        )
 
         if args.scan_live:
             self.get_live_hosts()
-        if args.scan_service and not scan_ports:
+        if current_service:
+            self.get_service_properties()
+        elif args.scan_service and not scan_ports:
             self.get_services()
         if args.scan_os:
             self.get_os()
-        if scan_ports:
+        if scan_ports and not current_service:
             self.get_ports(self.is_multi_target(getattr(args, "target", None)))
 
 
@@ -48,29 +59,44 @@ class XmlParser:
             self.add_device_nodes(host)
 
 
+    def get_service_properties(self):
+        """Update the current service without creating a new node."""
+        hosts = self.root.findall("host")
+        if len(hosts) != 1:
+            return
+
+        ports = hosts[0].findall("ports/port")
+        if len(ports) != 1:
+            return
+
+        port = ports[0]
+        state = port.find("state")
+        if state is None or state.get("state") == "closed":
+            return
+
+        service = port.find("service")
+        service_name = service.get("name") if service is not None else None
+        service_type = self.get_service_type(service_name)
+        if service_type:
+            self.ptjsonlib.add_properties({"serviceType": service_type})
+        elif service_name:
+            self.ptjsonlib.add_properties({"name": self.get_service_name(service_name, port.get("portid"))})
+
     def get_services(self):
         """Parse service scan xml output"""
         for host in self.root.findall("host"):
             for port in host.find("ports").findall("port"):
-                banner = ""
                 port_id = port.get("portid")
                 state = port.find("state").get("state")
                 if state == "closed":
                     continue
-                service = port.find("service")
-                if service is not None:
-                    service = port.find("service").get("name")
-                    product = port.find("service").get("product")
-                    version = port.find("service").get("version")
-                    extrainfo = port.find("service").get("extrainfo")
-                    if product:
-                        banner += f'{product}'
-                    if version:
-                        banner += f'{version}'
-                    if extrainfo:
-                        banner += f' ({extrainfo})'
-                name = service.upper() if service else port_id
-                props = {"port": port_id, "name": name, "state": state, "serviceType": self.get_service_type(service)}
+                service_elem = port.find("service")
+                service = service_elem.get("name") if service_elem is not None else None
+                props = {"port": port_id, "name": self.get_service_name(service, port_id), "state": state}
+                service_type = self.get_service_type(service)
+                if service_type:
+                    props["serviceType"] = service_type
+                banner = self.get_service_version(service_elem)
                 if banner: props["version"] = banner
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", properties=props))
 
@@ -96,18 +122,19 @@ class XmlParser:
                 state = "portState" + "".join(part.capitalize() for part in raw_state.split("|"))
                 reason = port.find("state").get("reason")
                 service_elem = port.find("service")
-                name = port_id
-                service = None
-                if service_elem is not None:
-                    name = service_elem.get("name")
-                    service = self.get_service_type(name)
-                    if name:
-                        name = name.upper()
-                props = {"name": name, "port": port_id, "protocol": protocol, "portState": state, "serviceType": service}
+                service_name = service_elem.get("name") if service_elem is not None else None
+                props = {"name": self.get_service_name(service_name, port_id), "port": port_id, "protocol": protocol, "portState": state}
+                service_type = self.get_service_type(service_name)
+                if service_type:
+                    props["serviceType"] = service_type
                 version = self.get_service_version(service_elem)
                 if version:
                     props["version"] = version
                 self.ptjsonlib.add_node(self.ptjsonlib.create_node_object("service", parent_type=service_parent_type, parent=service_parent, properties=props))
+
+    @staticmethod
+    def is_single_port(port):
+        return port is not None and re.fullmatch(r"(?:[TUSP]:)?[0-9]+", port.strip()) is not None
 
     @staticmethod
     def is_multi_target(target):
@@ -174,15 +201,23 @@ class XmlParser:
             banner += f" ({extrainfo})"
         return banner or None
 
-    @staticmethod
-    def get_service_type(service):
+    def get_service_definition(self, service):
         if not service:
-            return None
+            return {}
 
-        if service == "http":
-            return "serviceTypeHttps"
+        if self.service_mapping is None:
+            with Path(__file__).with_name("service_mapping.json").open(encoding="utf-8") as mapping_file:
+                self.service_mapping = json.load(mapping_file)
+        return self.service_mapping.get(service, {})
 
-        return "serviceType" + service.capitalize()
+    def get_service_type(self, service):
+        return self.get_service_definition(service).get("serviceType")
+
+    def get_service_name(self, service, port):
+        if not service:
+            return port
+        name = self.get_service_definition(service).get("name", service.upper())
+        return f"{port} ({name})"
 
     def get_elapsed_time(self):
         return self.root.find("runstats").find("finished").get("elapsed")

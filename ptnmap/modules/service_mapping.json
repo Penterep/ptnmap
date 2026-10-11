@@ -1,0 +1,18 @@
+{
+    "http": {"name": "HTTP", "serviceType": "serviceTypeHttps"},
+    "https": {"name": "HTTPS", "serviceType": "serviceTypeHttps"},
+    "smtp": {"name": "SMTP", "serviceType": "serviceTypeSmtp"},
+    "submissions": {"name": "SMTP", "serviceType": "serviceTypeSmtp"},
+    "imap": {"name": "IMAP", "serviceType": "serviceTypeImap"},
+    "pop3": {"name": "POP3", "serviceType": "serviceTypePop3"},
+    "dns": {"name": "DNS", "serviceType": "serviceTypeDns"},
+    "ftp": {"name": "FTP", "serviceType": "serviceTypeFTP"},
+    "ssh": {"name": "SSH", "serviceType": "serviceTypeSSH"},
+    "msrpc": {"name": "MSRPC", "serviceType": "serviceTypeMsrpc"},
+    "microsoft-ds": {"name": "SMB", "serviceType": "serviceTypeSmb"},
+    "netbios-ssn": {"name": "NETBIOS", "serviceType": "serviceTypeNetbios"},
+    "ms-wbt-server": {"name": "RDP", "serviceType": "serviceTypeRdp"},
+    "domain": {"name": "DHCP", "serviceType": "serviceTypeDhcp"},
+    "upnp": {"name": "UPnP", "serviceType": "serviceTypeUpnp"},
+    "snmp": {"name": "SNMP", "serviceType": "serviceTypeSnmp"}
+}

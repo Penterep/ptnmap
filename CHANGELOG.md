@@ -1,5 +1,13 @@
 ## Version History
 
+## Version 0.0.16
+
+- Changed `-sV` scans with one target and one explicit port to return properties of the current node with no new nodes, including when combined with `-sT`, `-sS` or `-sU`. Known services return `serviceType`; unmapped services return `name` instead. Multiple-target, multiple-port and default-port scans still return nodes.
+- Added 16 service name and type mappings in [`ptnmap/modules/service_mapping.json`](ptnmap/modules/service_mapping.json). Entries use the nmap service name as the key and define `name` and `serviceType`, for example `"http": {"name": "HTTP", "serviceType": "serviceTypeHttps"}`. Edit or add entries to extend the mapping without changing the parser.
+- Changed service node names to the format `80 (HTTP)`, preserving mapped capitalization such as `1900 (UPnP)`.
+- Unmapped services use the uppercase nmap name, for example `1234 (CUSTOM-SERVICE)`, and omit `serviceType` entirely. If nmap supplies no service name, service nodes use the port number as their name.
+- Included the service mapping JSON in installation packages through `package_data`.
+
 ## Version 0.0.8
 
 - Added device nodes as parents for services in port scan results against multiple targets.

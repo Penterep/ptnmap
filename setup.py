@@ -24,6 +24,7 @@ setuptools.setup(
     install_requires=["ptlibs>=1.0.7,<2", "defusedxml"],
     entry_points = {'console_scripts': ['ptnmap = ptnmap.ptnmap:main']},
     include_package_data= True,
+    package_data={"ptnmap.modules": ["service_mapping.json"]},
     long_description=long_description,
     long_description_content_type="text/markdown",
     project_urls = {
