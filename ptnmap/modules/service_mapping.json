@@ -12,7 +12,7 @@
     "microsoft-ds": {"name": "SMB", "serviceType": "serviceTypeSmb"},
     "netbios-ssn": {"name": "NETBIOS", "serviceType": "serviceTypeNetbios"},
     "ms-wbt-server": {"name": "RDP", "serviceType": "serviceTypeRdp"},
-    "domain": {"name": "DHCP", "serviceType": "serviceTypeDhcp"},
+    "domain": {"name": "DNS", "serviceType": "serviceTypeDns"},
     "upnp": {"name": "UPnP", "serviceType": "serviceTypeUpnp"},
     "snmp": {"name": "SNMP", "serviceType": "serviceTypeSnmp"}
 }
